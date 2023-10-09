@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "lib": ["es2023"],
+    "module": "NodeNext",
+    "target": "ES2017",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "build"
+
+  },
+  "include": ["server.ts"],
+  "exclude": ["build"]
+}
