@@ -23,8 +23,8 @@ export class CdkStack extends cdk.Stack {
 
     this.vpc = new ec2.Vpc(this, "serverdummy-Vpc", {
       ipAddresses: ec2.IpAddresses.cidr("10.0.0.0/16"),
-      maxAzs: 2,
       natGateways: 1,
+      availabilityZones: ["eu-west1", "eu-west2"],
       subnetConfiguration: [
         {
           subnetType: ec2.SubnetType.PUBLIC,
@@ -36,16 +36,16 @@ export class CdkStack extends cdk.Stack {
           name: "serverdummy-PublicSubnet2",
           cidrMask: 24,
         },
-        {
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-          name: "serverdummy-PrivateSubnet1",
-          cidrMask: 24,
-        },
-        {
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-          name: "serverdummy-PrivateSubnet2",
-          cidrMask: 24,
-        },
+        // {
+        //   subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        //   name: "serverdummy-PrivateSubnet1",
+        //   cidrMask: 24,
+        // },
+        // {
+        //   subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        //   name: "serverdummy-PrivateSubnet2",
+        //   cidrMask: 24,
+        // },
       ],
     });
 
@@ -67,6 +67,9 @@ export class CdkStack extends cdk.Stack {
         taskImageOptions: {
           image: ecs.ContainerImage.fromEcrRepository(this.serverRepository),
         },
+        taskSubnets: {
+          subnets: this.vpc.publicSubnets,
+        }
       }
     );
 
