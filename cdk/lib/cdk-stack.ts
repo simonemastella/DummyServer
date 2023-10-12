@@ -23,7 +23,7 @@ export class CdkStack extends cdk.Stack {
 
     this.vpc = new ec2.Vpc(this, "serverdummy-Vpc", {
       ipAddresses: ec2.IpAddresses.cidr("10.0.0.0/16"),
-      natGateways: 1,
+      natGateways: 0,
       availabilityZones: ["eu-west1", "eu-west2"],
       subnetConfiguration: [
         {
