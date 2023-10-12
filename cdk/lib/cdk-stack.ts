@@ -1,11 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as ecs_patterns from "aws-cdk-lib/aws-ecs-patterns";
-import * as kms from 'aws-cdk-lib/aws-kms';
+import * as kms from "aws-cdk-lib/aws-kms";
 
 export class CdkStack extends cdk.Stack {
   readonly serverRepository: ecr.IRepository;
@@ -22,8 +21,8 @@ export class CdkStack extends cdk.Stack {
       repositoryName: "serverdummy",
     });
 
-    this.vpc = new ec2.Vpc(this, "MyVpc", {
-      cidr: "10.0.0.0/16",
+    this.vpc = new ec2.Vpc(this, "serverdummy-Vpc", {
+      ipAddresses: ec2.IpAddresses.cidr("10.0.0.0/16"),
       maxAzs: 2,
       natGateways: 1,
       subnetConfiguration: [
@@ -55,28 +54,48 @@ export class CdkStack extends cdk.Stack {
     });
 
     this.cluster = new ecs.Cluster(this, "serverdummy-Cluster", {
-      vpc: this.vpc
+      vpc: this.vpc,
     });
 
-    // Create a load-balanced Fargate service and make it public
-    new ecs_patterns.ApplicationLoadBalancedFargateService(this, "serverdummy-ALB", {
-      cluster: this.cluster, // Required
-    });
+    // Create a public Application Load Balanced Fargate service
+    new ecs_patterns.ApplicationLoadBalancedFargateService(
+      this,
+      "serverdummy-ALB",
+      {
+        cluster: this.cluster, // Required
+        publicLoadBalancer: true,
+        taskImageOptions: {
+          image: ecs.ContainerImage.fromEcrRepository(this.serverRepository),
+        },
+      }
+    );
 
     //create security groups
-    this.ecsSecurityGroup = new ec2.SecurityGroup(this, 'serverdummy-ECSSecurityGroup', {
-      vpc: this.vpc,
-      securityGroupName: 'serverdummy-ECSSecurityGroup',
-      description: 'Security group for ECS instances of serverdummy',
-    });
+    this.ecsSecurityGroup = new ec2.SecurityGroup(
+      this,
+      "serverdummy-ECSSecurityGroup",
+      {
+        vpc: this.vpc,
+        securityGroupName: "serverdummy-ECSSecurityGroup",
+        description: "Security group for ECS instances of serverdummy",
+      }
+    );
 
     // Allow incoming traffic on port 80 (HTTP) and 443 (HTTPS) for ECS instances
-    this.ecsSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP traffic');
-    this.ecsSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'Allow HTTPS traffic');
+    this.ecsSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      "Allow HTTP traffic"
+    );
+    this.ecsSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      "Allow HTTPS traffic"
+    );
 
-    this.kmsKey = new kms.Key(this, 'serverdummy-KmsKey', {
-      description: 'KMS Key of serverdummy',
+    this.kmsKey = new kms.Key(this, "serverdummy-KmsKey", {
+      description: "KMS Key of serverdummy",
       enableKeyRotation: false,
-    });    
+    });
   }
 }
